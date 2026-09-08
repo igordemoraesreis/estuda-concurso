@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui';
 import { useTopico, useToggleConcluido } from '@/features/edital/useTopico';
 import { useConcursoAtivo } from '@/features/concurso/hooks';
 import { SessoesEstudo } from '@/features/estudo/SessoesEstudo';
+import { SessoesExercicio } from '@/features/exercicios/SessoesExercicio';
 import type { AppError } from '@/lib/errors';
 
 export default function TopicoDetalhe() {
@@ -49,6 +50,7 @@ export default function TopicoDetalhe() {
         />
 
         {/* Sessões de exercício (Task 15) entram aqui */}
+        <SessoesExercicio topicoId={topico.id} concursoId={concurso?.id ?? null} />
       </ScrollView>
     </SafeAreaView>
   );
