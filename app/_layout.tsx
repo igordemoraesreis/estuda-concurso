@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { Slot } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { queryClient } from '@/lib/query';
+import { installAuthCacheReset, queryClient } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import { ThemeRehydrator } from '@/theme/ThemeRehydrator';
 import { ToastProvider } from '@/components/ui';
@@ -25,6 +25,9 @@ function ThemedRoot({ children }: { children: ReactNode }) {
 }
 
 export default function RootLayout() {
+  // Zera o cache do React Query quando a identidade muda (sign-out / troca de conta).
+  useEffect(() => installAuthCacheReset(), []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>

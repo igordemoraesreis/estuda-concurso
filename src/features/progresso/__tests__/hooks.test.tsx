@@ -43,7 +43,7 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 const wrapper = ({ children }: any) => (
-  <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } })}>{children}</QueryClientProvider>
 );
 
 test('calcula cobertura 0.5 e ponderada 0.5', async () => {

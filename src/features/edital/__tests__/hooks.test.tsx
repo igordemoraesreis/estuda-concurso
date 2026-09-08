@@ -30,7 +30,7 @@ jest.mock('../api', () => ({
 }));
 
 const wrapper = ({ children }: any) => (
-  <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } })}>{children}</QueryClientProvider>
 );
 
 test('carrega a árvore do concurso', async () => {

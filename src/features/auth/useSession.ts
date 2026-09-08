@@ -12,10 +12,14 @@ export function useSession() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setLoading(false);
+      })
+      // Sem o catch, uma rejeição deixaria `loading` preso em true (spinner infinito).
+      .catch(() => setLoading(false));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
   }, []);

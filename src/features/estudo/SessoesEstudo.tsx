@@ -2,14 +2,11 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, Input } from '@/components/ui';
 import { useTheme } from '@/theme/ThemeProvider';
+import { hojeISO, formatarDataBR } from '@/lib/date';
 import { useTimer, segundosDecorridos } from './timerStore';
 import { formatarMMSS } from './TimerPill';
 import { useEstudoMutations, useSessoesEstudo } from './hooks';
 import type { SessaoEstudoRow } from './api';
-
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function formatarDuracao(segundos: number): string {
   const min = Math.round(segundos / 60);
@@ -17,12 +14,6 @@ function formatarDuracao(segundos: number): string {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return m ? `${h}h ${m}min` : `${h}h`;
-}
-
-function formatarData(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('pt-BR');
 }
 
 export function SessoesEstudo({
@@ -35,6 +26,7 @@ export function SessoesEstudo({
   topicoNome?: string;
 }) {
   const { c } = useTheme();
+  const [salvando, setSalvando] = useState(false);
   const status = useTimer((s) => s.status);
   const timerTopicoId = useTimer((s) => s.topicoId);
   const iniciadaEm = useTimer((s) => s.iniciadaEm);
@@ -51,26 +43,45 @@ export function SessoesEstudo({
   const rodando = status === 'running';
   const segundos = segundosDecorridos({ status, iniciadaEm, acumulado });
 
+  // O reset só acontece em `onSuccess`: se o save falhar, o cronômetro continua de pé
+  // e o usuário pode tentar de novo em vez de perder a sessão.
+  function salvarSessao(
+    st: ReturnType<typeof useTimer.getState>,
+    alvoTopicoId: string,
+    depois?: () => void,
+  ) {
+    setSalvando(true);
+    salvarCronometro.mutate(
+      {
+        topicoId: alvoTopicoId,
+        iniciadaEm: new Date(st.sessaoIniciadaEm ?? st.iniciadaEm ?? Date.now()).toISOString(),
+        duracaoSegundos: segundosDecorridos(st),
+      },
+      {
+        onSuccess: () => {
+          useTimer.getState().reset();
+          depois?.();
+        },
+        // O toast de erro vem do `MutationCache` padrão (`src/lib/query.ts`); duplicar
+        // aqui mostraria a mesma mensagem duas vezes. Em erro nada é resetado — o
+        // cronômetro continua de pé e o usuário tenta de novo.
+        onSettled: () => setSalvando(false),
+      },
+    );
+  }
+
   function parar() {
     const st = useTimer.getState();
-    salvarCronometro.mutate({
-      topicoId,
-      iniciadaEm: new Date(st.iniciadaEm ?? Date.now()).toISOString(),
-      duracaoSegundos: segundosDecorridos(st),
-    });
-    useTimer.getState().reset();
+    if (salvando || st.status === 'idle') return; // guarda contra toque duplo
+    salvarSessao(st, topicoId);
   }
 
   function pausarOutroEIniciar() {
+    if (salvando) return;
     useTimer.getState().pause();
     const st = useTimer.getState();
-    salvarCronometro.mutate({
-      topicoId: st.topicoId!,
-      iniciadaEm: new Date(st.iniciadaEm ?? Date.now()).toISOString(),
-      duracaoSegundos: segundosDecorridos(st),
-    });
-    useTimer.getState().reset();
-    useTimer.getState().start(topicoId, topicoNome);
+    if (!st.topicoId) return;
+    salvarSessao(st, st.topicoId, () => useTimer.getState().start(topicoId, topicoNome));
   }
 
   function registrarManual() {
@@ -102,14 +113,18 @@ export function SessoesEstudo({
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Button label="Parar" variant="danger" onPress={parar} />
+              <Button label="Parar" variant="danger" onPress={parar} disabled={salvando} />
             </View>
           </View>
         </View>
       ) : emOutroTopico ? (
         <View style={{ gap: 12 }}>
           <Text style={{ color: c('muted') }}>Cronômetro rodando em outro tópico</Text>
-          <Button label="Salvar o outro e iniciar aqui" onPress={pausarOutroEIniciar} />
+          <Button
+            label="Salvar o outro e iniciar aqui"
+            onPress={pausarOutroEIniciar}
+            disabled={salvando}
+          />
         </View>
       ) : (
         <Button
@@ -147,7 +162,7 @@ export function SessoesEstudo({
               paddingVertical: 6,
             }}
           >
-            <Text style={{ color: c('text') }}>{formatarData(s.iniciada_em)}</Text>
+            <Text style={{ color: c('text') }}>{formatarDataBR(s.iniciada_em)}</Text>
             <Text style={{ color: c('muted') }}>{formatarDuracao(s.duracao_segundos)}</Text>
             <View
               style={{

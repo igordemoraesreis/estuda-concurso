@@ -15,7 +15,7 @@ export type Profile = {
 
 export function useProfile(userId: string | null) {
   return useQuery({
-    queryKey: qk.profile(),
+    queryKey: qk.profile(userId),
     enabled: !!userId,
     queryFn: async (): Promise<Profile | null> => {
       const { data, error } = await supabase
@@ -34,11 +34,11 @@ export function useUpdateSettings(userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (patch: Partial<Settings>) => {
-      const atual = qc.getQueryData<Profile>(qk.profile());
+      const atual = qc.getQueryData<Profile>(qk.profile(userId));
       const merged = { ...DEFAULTS, ...atual?.settings, ...patch };
       const { error } = await supabase.from('profiles').update({ settings: merged }).eq('id', userId!);
       if (error) throw normalizeError(error);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.profile() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.profile(userId) }),
   });
 }

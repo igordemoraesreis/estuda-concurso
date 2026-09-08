@@ -7,7 +7,13 @@ type Status = 'idle' | 'running' | 'paused';
 type Persistido = {
   topicoId: string | null;
   topicoNome: string | null;
+  /** Início do segmento em curso; `pause()` zera. Só serve para contar o tempo. */
   iniciadaEm: number | null;
+  /**
+   * Início da SESSÃO (não do segmento). Sobrevive a pausas e só é limpo por `reset()`;
+   * é este valor que vai para `iniciada_em` ao salvar.
+   */
+  sessaoIniciadaEm: number | null;
   acumulado: number;
   status: Status;
 };
@@ -24,6 +30,7 @@ const inicial: Persistido = {
   topicoId: null,
   topicoNome: null,
   iniciadaEm: null,
+  sessaoIniciadaEm: null,
   acumulado: 0,
   status: 'idle',
 };
@@ -35,10 +42,12 @@ function persist(s: Persistido) {
 export const useTimer = create<TimerState>((set, get) => ({
   ...inicial,
   start: (topicoId, topicoNome) => {
+    const agora = Date.now();
     const s: Persistido = {
       topicoId,
       topicoNome,
-      iniciadaEm: Date.now(),
+      iniciadaEm: agora,
+      sessaoIniciadaEm: agora,
       acumulado: 0,
       status: 'running',
     };
@@ -69,7 +78,14 @@ export const useTimer = create<TimerState>((set, get) => ({
   hydrate: async () => {
     try {
       const raw = await AsyncStorage.getItem(KEY);
-      if (raw) set(JSON.parse(raw) as Persistido);
+      if (!raw) return;
+      const p = JSON.parse(raw) as Partial<Persistido>;
+      // Estado gravado por versões antigas não tem `sessaoIniciadaEm`.
+      set({
+        ...inicial,
+        ...p,
+        sessaoIniciadaEm: p.sessaoIniciadaEm ?? p.iniciadaEm ?? null,
+      });
     } catch {
       // ignora storage indisponível
     }
@@ -81,6 +97,7 @@ function pick(s: TimerState): Persistido {
     topicoId: s.topicoId,
     topicoNome: s.topicoNome,
     iniciadaEm: s.iniciadaEm,
+    sessaoIniciadaEm: s.sessaoIniciadaEm,
     acumulado: s.acumulado,
     status: s.status,
   };

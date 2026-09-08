@@ -4,7 +4,7 @@ import Revisar from '../revisar';
 import type { GrupoRevisao } from '@/features/revisao/hooks';
 
 const mockPush = jest.fn();
-let mockRevisao: { data: GrupoRevisao[] | null; isLoading: boolean } = {
+const revisaoPadrao = (): { data: GrupoRevisao[] | null; isLoading: boolean } => ({
   data: [
     {
       limiarDias: 30,
@@ -20,7 +20,8 @@ let mockRevisao: { data: GrupoRevisao[] | null; isLoading: boolean } = {
     },
   ],
   isLoading: false,
-};
+});
+let mockRevisao = revisaoPadrao();
 
 jest.mock('@/features/concurso/hooks', () => ({
   useConcursoAtivo: () => ({ data: { id: 'c1', nome: 'C' } }),
@@ -47,6 +48,8 @@ const renderTela = () =>
 
 beforeEach(() => {
   mockPush.mockClear();
+  // Sem isto, o teste do EmptyState "vaza" para os seguintes (ordem de execução).
+  mockRevisao = revisaoPadrao();
 });
 
 test('lista item de revisão sob o cabeçalho do grupo', async () => {

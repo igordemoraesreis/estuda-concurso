@@ -2,19 +2,10 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, Input, ProgressBar, Stat } from '@/components/ui';
 import { useTheme } from '@/theme/ThemeProvider';
+import { hojeISO, formatarDataBR } from '@/lib/date';
 import { sessaoExercicioSchema } from './schema';
 import { useExercicioMutations, useSessoesExercicio } from './hooks';
 import type { SessaoExercicioRow } from './api';
-
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatarData(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('pt-BR');
-}
 
 function paraNumero(texto: string): number {
   const t = texto.trim();
@@ -141,7 +132,7 @@ export function SessoesExercicio({
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: c('text') }}>{formatarData(s.data)}</Text>
+              <Text style={{ color: c('text') }}>{formatarDataBR(s.data)}</Text>
               <Text style={{ color: c('muted') }}>
                 {s.acertos}/{total} ({pct(s.acertos, total)}%)
               </Text>

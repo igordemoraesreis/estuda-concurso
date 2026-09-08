@@ -11,12 +11,15 @@ export type Concurso = {
 export async function buscarConcursoAtivo(): Promise<Concurso | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
-  const { data: prof } = await supabase.from('profiles').select('active_concurso_id').eq('id', u.user.id).maybeSingle();
+  const { data: prof, error: profErr } = await supabase.from('profiles').select('active_concurso_id').eq('id', u.user.id).maybeSingle();
+  if (profErr) throw normalizeError(profErr);
   if (!prof?.active_concurso_id) return null;
   const { data, error } = await supabase
     .from('concursos')
     .select('id, nome, banca, cargo, data_prova, status')
     .eq('id', prof.active_concurso_id)
+    // Um concurso arquivado nunca deve ser servido como ativo.
+    .eq('status', 'ativo')
     .maybeSingle();
   if (error) throw normalizeError(error);
   return data as Concurso | null;
@@ -70,7 +73,11 @@ export async function criarConcursoComArvore(input: {
     }
   }
 
-  const { error: pErr } = await supabase.from('profiles').update({ active_concurso_id: c.id }).eq('id', uid);
+  // `upsert` (e não `update`): se a linha de profile não existir, um `update` afetaria
+  // 0 linhas em silêncio e o usuário ficaria travado no onboarding para sempre.
+  const { error: pErr } = await supabase
+    .from('profiles')
+    .upsert({ id: uid, active_concurso_id: c.id });
   if (pErr) throw normalizeError(pErr);
   return { concursoId: c.id };
 }
@@ -80,9 +87,14 @@ export async function arquivarConcurso(id: string): Promise<void> {
   const uid = u.user!.id;
   const { error } = await supabase.from('concursos').update({ status: 'arquivado', archived_at: new Date().toISOString() }).eq('id', id);
   if (error) throw normalizeError(error);
-  const { data: prof } = await supabase.from('profiles').select('active_concurso_id').eq('id', uid).maybeSingle();
+  const { data: prof, error: profErr } = await supabase.from('profiles').select('active_concurso_id').eq('id', uid).maybeSingle();
+  if (profErr) throw normalizeError(profErr);
   if (prof?.active_concurso_id === id) {
-    await supabase.from('profiles').update({ active_concurso_id: null }).eq('id', uid);
+    const { error: limparErr } = await supabase
+      .from('profiles')
+      .update({ active_concurso_id: null })
+      .eq('id', uid);
+    if (limparErr) throw normalizeError(limparErr);
   }
 }
 

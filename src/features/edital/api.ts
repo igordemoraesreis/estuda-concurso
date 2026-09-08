@@ -22,22 +22,32 @@ export type DisciplinaRow = {
 export type ArvoreCarregada = { disciplinas: DisciplinaRow[] };
 
 export async function carregarArvore(concursoId: string): Promise<ArvoreCarregada> {
-  const [{ data: disc, error: e1 }, { data: ass, error: e2 }, { data: tops, error: e3 }] =
-    await Promise.all([
-      supabase
-        .from('disciplinas')
-        .select('id, nome, peso, ordem')
-        .eq('concurso_id', concursoId)
-        .order('ordem'),
-      supabase.from('assuntos').select('id, nome, ordem, disciplina_id').order('ordem'),
-      supabase
-        .from('topicos')
-        .select('id, nome, disciplina_id, assunto_id, ordem, concluido, concluido_em')
-        .order('ordem'),
-    ]);
-  if (e1 || e2 || e3) throw normalizeError(e1 ?? e2 ?? e3);
+  const { data: disc, error: e1 } = await supabase
+    .from('disciplinas')
+    .select('id, nome, peso, ordem')
+    .eq('concurso_id', concursoId)
+    .order('ordem');
+  if (e1) throw normalizeError(e1);
 
-  const discIds = new Set((disc ?? []).map((d) => d.id));
+  const discIds = (disc ?? []).map((d) => d.id);
+  if (discIds.length === 0) return { disciplinas: [] };
+
+  // Escopado por disciplina: sem o `.in(...)` isso puxaria TODAS as linhas do usuário,
+  // em todos os concursos, e o PostgREST corta em 1000 linhas (truncamento silencioso).
+  const [{ data: ass, error: e2 }, { data: tops, error: e3 }] = await Promise.all([
+    supabase
+      .from('assuntos')
+      .select('id, nome, ordem, disciplina_id')
+      .in('disciplina_id', discIds)
+      .order('ordem'),
+    supabase
+      .from('topicos')
+      .select('id, nome, disciplina_id, assunto_id, ordem, concluido, concluido_em')
+      .in('disciplina_id', discIds)
+      .order('ordem'),
+  ]);
+  if (e2 || e3) throw normalizeError(e2 ?? e3);
+
   const disciplinas: DisciplinaRow[] = (disc ?? []).map((d) => {
     const assuntos: AssuntoRow[] = (ass ?? [])
       .filter((a) => a.disciplina_id === d.id)
@@ -52,7 +62,7 @@ export async function carregarArvore(concursoId: string): Promise<ArvoreCarregad
     ) as TopicoRow[];
     return { id: d.id, nome: d.nome, peso: d.peso, ordem: d.ordem, assuntos, topicos };
   });
-  return { disciplinas: disciplinas.filter((d) => discIds.has(d.id)) };
+  return { disciplinas };
 }
 
 async function uid() {

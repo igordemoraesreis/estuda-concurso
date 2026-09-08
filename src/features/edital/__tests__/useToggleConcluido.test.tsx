@@ -8,13 +8,23 @@ const mockEq = jest.fn();
 const mockUpdate = jest.fn(() => ({ eq: mockEq }));
 jest.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ update: mockUpdate }) } }));
 
+// Clientes criados pelos testes: sem o clear no fim, os timers de gc do query-core
+// seguram o worker do Jest depois que a suíte termina.
+const clients: QueryClient[] = [];
+function novoClient() {
+  const qc = new QueryClient();
+  clients.push(qc);
+  return qc;
+}
+afterEach(() => clients.splice(0).forEach((c) => c.clear()));
+
 beforeEach(() => {
   mockEq.mockReset();
   mockUpdate.mockClear();
 });
 
 function setup() {
-  const qc = new QueryClient();
+  const qc = novoClient();
   qc.setQueryData(qk.arvore('c1'), {
     disciplinas: [
       {
@@ -93,7 +103,7 @@ test('reverte o cache quando a atualização falha', async () => {
 test('patch atinge tópico dentro de assunto também', async () => {
   mockEq.mockResolvedValue({ error: null });
 
-  const qc = new QueryClient();
+  const qc = novoClient();
   qc.setQueryData(qk.arvore('c1'), {
     disciplinas: [
       {
@@ -140,7 +150,7 @@ test('patch atinge tópico dentro de assunto também', async () => {
 
 test('sem concursoId não quebra a mutação', async () => {
   mockEq.mockResolvedValue({ error: null });
-  const qc = new QueryClient();
+  const qc = novoClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
