@@ -28,7 +28,7 @@ beforeEach(() => {
 
 test('bloqueia avanço sem nome do concurso', async () => {
   await wrap();
-  fireEvent.press(screen.getByText('Continuar'));
+  await fireEvent.press(screen.getByText('Continuar'));
   await waitFor(() =>
     expect(screen.getByText('Informe o nome do concurso')).toBeOnTheScreen(),
   );
@@ -37,21 +37,21 @@ test('bloqueia avanço sem nome do concurso', async () => {
 test('fluxo completo cria concurso a partir de texto colado', async () => {
   await wrap();
   await act(async () => {
-    fireEvent.changeText(screen.getByLabelText('Nome do concurso'), 'TRT-4');
+    await fireEvent.changeText(screen.getByLabelText('Nome do concurso'), 'TRT-4');
   });
   await act(async () => {
-    fireEvent.press(screen.getByText('Continuar'));
+    await fireEvent.press(screen.getByText('Continuar'));
   });
   await waitFor(() => expect(screen.getByLabelText('Texto do edital')).toBeOnTheScreen());
   await act(async () => {
-    fireEvent.changeText(screen.getByLabelText('Texto do edital'), '1 PORTUGUÊS\n1.1 Crase');
+    await fireEvent.changeText(screen.getByLabelText('Texto do edital'), '1 PORTUGUÊS\n1.1 Crase');
   });
   await act(async () => {
-    fireEvent.press(screen.getByText('Processar texto'));
+    await fireEvent.press(screen.getByText('Processar texto'));
   });
   await waitFor(() => expect(screen.getByText('Criar concurso')).toBeOnTheScreen());
   await act(async () => {
-    fireEvent.press(screen.getByText('Criar concurso'));
+    await fireEvent.press(screen.getByText('Criar concurso'));
   });
   await waitFor(() => expect(mockMutateAsync).toHaveBeenCalled());
   expect(mockMutateAsync.mock.calls[0][0].concurso.nome).toBe('TRT-4');

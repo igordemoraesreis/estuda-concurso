@@ -14,7 +14,7 @@ test('altera o peso da disciplina', async () => {
       <ArvoreEditor value={base} onChange={onChange} />
     </ThemeProvider>,
   );
-  fireEvent.press(screen.getByLabelText('Peso 5 para Português'));
+  await fireEvent.press(screen.getByLabelText('Peso 5 para Português'));
   await waitFor(() =>
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ disciplinas: [expect.objectContaining({ peso: 5 })] }),
@@ -29,7 +29,7 @@ test('remove um tópico', async () => {
       <ArvoreEditor value={base} onChange={onChange} />
     </ThemeProvider>,
   );
-  fireEvent.press(screen.getByLabelText('Remover tópico Crase'));
+  await fireEvent.press(screen.getByLabelText('Remover tópico Crase'));
   await waitFor(() =>
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ disciplinas: [expect.objectContaining({ topicos: [] })] }),
@@ -44,7 +44,7 @@ test('adiciona uma disciplina', async () => {
       <ArvoreEditor value={{ disciplinas: [] }} onChange={onChange} />
     </ThemeProvider>,
   );
-  fireEvent.press(screen.getByLabelText('Adicionar disciplina'));
+  await fireEvent.press(screen.getByLabelText('Adicionar disciplina'));
   await waitFor(() =>
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ disciplinas: [expect.objectContaining({ nome: 'Nova disciplina', peso: 3 })] }),

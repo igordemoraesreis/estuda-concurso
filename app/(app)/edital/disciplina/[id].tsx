@@ -6,7 +6,6 @@ import { Button, EmptyState, Input, useToast } from '@/components/ui';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useConcursoAtivo } from '@/features/concurso/hooks';
 import { useArvore, useEditalMutations } from '@/features/edital/hooks';
-import type { AppError } from '@/lib/errors';
 
 export default function DisciplinaDetalhe() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,8 +19,6 @@ export default function DisciplinaDetalhe() {
 
   const [nomeNova, setNomeNova] = useState('');
   const disc = arvore?.disciplinas.find((d) => d.id === id) ?? null;
-
-  const erro = (e: unknown) => toast.erro((e as AppError).message);
 
   if (id === 'nova') {
     return (
@@ -41,8 +38,8 @@ export default function DisciplinaDetalhe() {
                 });
                 toast.sucesso('Disciplina criada!');
                 router.back();
-              } catch (e) {
-                erro(e);
+              } catch {
+                // erro já exibido pelo MutationCache global
               }
             }}
           />
@@ -107,15 +104,12 @@ export default function DisciplinaDetalhe() {
         <Pressable
           accessibilityLabel="Adicionar tópico"
           onPress={() => {
-            mut.addTopico.mutate(
-              {
-                disciplinaId: disc.id,
-                nome: 'Novo tópico',
-                ordem: disc.topicos.length,
-                assuntoId: null,
-              },
-              { onError: erro },
-            );
+            mut.addTopico.mutate({
+              disciplinaId: disc.id,
+              nome: 'Novo tópico',
+              ordem: disc.topicos.length,
+              assuntoId: null,
+            });
           }}
         >
           <Text style={{ color: c('primary') }}>+ tópico</Text>
@@ -149,15 +143,12 @@ export default function DisciplinaDetalhe() {
             <Pressable
               accessibilityLabel={`Adicionar tópico em ${a.nome}`}
               onPress={() =>
-                mut.addTopico.mutate(
-                  {
-                    disciplinaId: disc.id,
-                    nome: 'Novo tópico',
-                    ordem: a.topicos.length,
-                    assuntoId: a.id,
-                  },
-                  { onError: erro },
-                )
+                mut.addTopico.mutate({
+                  disciplinaId: disc.id,
+                  nome: 'Novo tópico',
+                  ordem: a.topicos.length,
+                  assuntoId: a.id,
+                })
               }
             >
               <Text style={{ color: c('primary') }}>+ tópico</Text>
@@ -167,10 +158,11 @@ export default function DisciplinaDetalhe() {
         <Pressable
           accessibilityLabel="Adicionar assunto"
           onPress={() =>
-            mut.addAssunto.mutate(
-              { disciplinaId: disc.id, nome: 'Novo assunto', ordem: disc.assuntos.length },
-              { onError: erro },
-            )
+            mut.addAssunto.mutate({
+              disciplinaId: disc.id,
+              nome: 'Novo assunto',
+              ordem: disc.assuntos.length,
+            })
           }
         >
           <Text style={{ color: c('primary') }}>+ assunto</Text>
@@ -186,8 +178,8 @@ export default function DisciplinaDetalhe() {
                 await mut.deleteDisciplina.mutateAsync({ id: disc.id });
                 toast.sucesso('Disciplina removida.');
                 router.back();
-              } catch (e) {
-                erro(e);
+              } catch {
+                // erro já exibido pelo MutationCache global
               }
             }}
           />

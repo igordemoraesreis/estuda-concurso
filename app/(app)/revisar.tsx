@@ -13,13 +13,15 @@ const LIMIARES_PADRAO = [7, 15, 30];
 export default function Revisar() {
   const { c } = useTheme();
   const router = useRouter();
-  const { data: concurso } = useConcursoAtivo();
+  const { data: concurso, isLoading: concLoading } = useConcursoAtivo();
   const { session } = useSession();
-  const { data: profile } = useProfile(session?.user.id ?? null);
+  const { data: profile, isLoading: profLoading } = useProfile(session?.user.id ?? null);
   const limiares = profile?.settings?.limiaresRevisaoDias ?? LIMIARES_PADRAO;
   const { data: grupos, isLoading } = useRevisao(concurso?.id ?? null, limiares);
 
-  if (isLoading) return null;
+  // Espera resolver concurso/profile antes de decidir; senão o EmptyState pisca
+  // no 1º render (concurso ainda undefined → useRevisao(null) → isLoading false).
+  if (concLoading || profLoading || !concurso || isLoading) return null;
 
   if (!grupos || grupos.length === 0) {
     return (

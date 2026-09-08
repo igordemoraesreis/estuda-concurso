@@ -13,7 +13,6 @@ import {
 import { parseEditalTexto } from '@/features/concurso/parseEditalTexto';
 import { ArvoreEditor } from '@/features/concurso/ArvoreEditor';
 import { useCriarConcurso } from '@/features/concurso/hooks';
-import type { AppError } from '@/lib/errors';
 
 type CampoDados = keyof ConcursoInput;
 type ErrosDados = Partial<Record<CampoDados, string>>;
@@ -58,8 +57,8 @@ export default function NovoConcurso() {
       await criar.mutateAsync({ concurso: dados, disciplinas: r.data.disciplinas });
       toast.sucesso('Concurso criado!');
       router.replace('/(app)');
-    } catch (e) {
-      toast.erro((e as AppError).message);
+    } catch {
+      // erro já exibido pelo MutationCache global
     }
   }
 

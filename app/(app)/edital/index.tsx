@@ -7,10 +7,12 @@ import { useConcursoAtivo } from '@/features/concurso/hooks';
 
 export default function Edital() {
   const router = useRouter();
-  const { data: concurso } = useConcursoAtivo();
+  const { data: concurso, isLoading: concLoading } = useConcursoAtivo();
   const { data: arvore, isLoading } = useArvore(concurso?.id ?? null);
 
-  if (isLoading) return null;
+  // Espera resolver o concurso ativo antes de decidir; senão o EmptyState pisca
+  // no 1º render (concurso ainda undefined → useArvore(null) → isLoading false).
+  if (concLoading || !concurso || isLoading) return null;
   if (!arvore || arvore.disciplinas.length === 0) {
     return (
       <SafeAreaView style={{ flex: 1 }}>
