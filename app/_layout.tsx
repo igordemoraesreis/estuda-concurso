@@ -1,10 +1,12 @@
 import '../global.css';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { View } from 'react-native';
 import { Slot } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '@/lib/query';
-import { ThemeProvider } from '@/theme/ThemeProvider';
+import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { ThemeRehydrator } from '@/theme/ThemeRehydrator';
 import { ToastProvider } from '@/components/ui';
 import { AuthGate } from '@/features/auth/AuthGate';
 import { TimerPill } from '@/features/estudo/TimerPill';
@@ -17,18 +19,26 @@ function TimerHydrator() {
   return null;
 }
 
+function ThemedRoot({ children }: { children: ReactNode }) {
+  const { c } = useTheme();
+  return <View style={{ flex: 1, backgroundColor: c('bg') }}>{children}</View>;
+}
+
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ToastProvider>
-            <AuthGate>
-              <TimerHydrator />
-              <Slot />
-              <TimerPill />
-            </AuthGate>
-          </ToastProvider>
+          <ThemedRoot>
+            <ToastProvider>
+              <AuthGate>
+                <TimerHydrator />
+                <ThemeRehydrator />
+                <Slot />
+                <TimerPill />
+              </AuthGate>
+            </ToastProvider>
+          </ThemedRoot>
         </ThemeProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
