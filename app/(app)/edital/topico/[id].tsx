@@ -1,0 +1,49 @@
+import { ScrollView, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useTopico, useToggleConcluido } from '@/features/edital/useTopico';
+import { useConcursoAtivo } from '@/features/concurso/hooks';
+import { SessoesEstudo } from '@/features/estudo/SessoesEstudo';
+import { SessoesExercicio } from '@/features/exercicios/SessoesExercicio';
+
+export default function TopicoDetalhe() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { c } = useTheme();
+  const { data: concurso } = useConcursoAtivo();
+  const { data: topico, isLoading } = useTopico(id);
+  const toggle = useToggleConcluido(concurso?.id ?? null);
+
+  if (isLoading || !topico) return null;
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+        <Text style={{ color: c('text'), fontSize: 24, fontWeight: '700' }}>{topico.nome}</Text>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: c('text') }}>Concluído</Text>
+          <Switch
+            value={topico.concluido}
+            onValueChange={(v) => toggle.mutate({ topicoId: topico.id, concluido: v })}
+          />
+        </View>
+
+        <SessoesEstudo
+          topicoId={topico.id}
+          concursoId={concurso?.id ?? null}
+          topicoNome={topico.nome}
+        />
+
+        {/* Sessões de exercício (Task 15) entram aqui */}
+        <SessoesExercicio topicoId={topico.id} concursoId={concurso?.id ?? null} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
