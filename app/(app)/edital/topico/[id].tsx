@@ -5,6 +5,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { useToast } from '@/components/ui';
 import { useTopico, useToggleConcluido } from '@/features/edital/useTopico';
 import { useConcursoAtivo } from '@/features/concurso/hooks';
+import { SessoesEstudo } from '@/features/estudo/SessoesEstudo';
 import type { AppError } from '@/lib/errors';
 
 export default function TopicoDetalhe() {
@@ -41,7 +42,12 @@ export default function TopicoDetalhe() {
           />
         </View>
 
-        {/* Cronômetro de estudo (Task 14) entra aqui */}
+        <SessoesEstudo
+          topicoId={topico.id}
+          concursoId={concurso?.id ?? null}
+          topicoNome={topico.nome}
+        />
+
         {/* Sessões de exercício (Task 15) entram aqui */}
       </ScrollView>
     </SafeAreaView>

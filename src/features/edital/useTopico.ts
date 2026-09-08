@@ -58,7 +58,8 @@ export function useToggleConcluido(concursoId: string | null) {
         qc.setQueryData(qk.arvore(concursoId), ctx.anterior);
       }
     },
-    onSettled: () => {
+    onSettled: (_d, _e, { topicoId }) => {
+      qc.invalidateQueries({ queryKey: ['topico', topicoId] });
       if (!concursoId) return;
       qc.invalidateQueries({ queryKey: qk.arvore(concursoId) });
       qc.invalidateQueries({ queryKey: qk.progresso(concursoId) });

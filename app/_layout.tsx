@@ -1,4 +1,5 @@
 import '../global.css';
+import { useEffect } from 'react';
 import { Slot } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +8,14 @@ import { ThemeProvider } from '@/theme/ThemeProvider';
 import { ToastProvider } from '@/components/ui';
 import { AuthGate } from '@/features/auth/AuthGate';
 import { TimerPill } from '@/features/estudo/TimerPill';
+import { useTimer } from '@/features/estudo/timerStore';
+
+function TimerHydrator() {
+  useEffect(() => {
+    useTimer.getState().hydrate();
+  }, []);
+  return null;
+}
 
 export default function RootLayout() {
   return (
@@ -15,6 +24,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <ToastProvider>
             <AuthGate>
+              <TimerHydrator />
               <Slot />
               <TimerPill />
             </AuthGate>
