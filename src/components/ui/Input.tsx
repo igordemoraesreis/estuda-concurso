@@ -5,6 +5,7 @@ export function Input({
   label,
   value,
   onChangeText,
+  onBlur,
   error,
   keyboardType,
   secureTextEntry,
@@ -15,6 +16,7 @@ export function Input({
   label: string;
   value: string;
   onChangeText: (t: string) => void;
+  onBlur?: () => void;
   error?: string;
   keyboardType?: KeyboardTypeOptions;
   secureTextEntry?: boolean;
@@ -30,6 +32,7 @@ export function Input({
         accessibilityLabel={label}
         value={value}
         onChangeText={onChangeText}
+        onBlur={onBlur}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
