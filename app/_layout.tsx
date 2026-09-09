@@ -1,7 +1,12 @@
 import '../global.css';
-import { useEffect, type ReactNode } from 'react';
-import { View } from 'react-native';
-import { Slot } from 'expo-router';
+import { useEffect, useMemo, type ReactNode } from 'react';
+import { Platform, View } from 'react-native';
+import {
+  Slot,
+  ThemeProvider as NavThemeProvider,
+  DefaultTheme as NavLight,
+  DarkTheme as NavDark,
+} from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { installAuthCacheReset, queryClient } from '@/lib/query';
@@ -19,9 +24,49 @@ function TimerHydrator() {
   return null;
 }
 
-function ThemedRoot({ children }: { children: ReactNode }) {
-  const { c } = useTheme();
-  return <View style={{ flex: 1, backgroundColor: c('bg') }}>{children}</View>;
+/**
+ * Sincroniza o tema do React Navigation com o tema do app (senão o container
+ * das telas pinta um cinza fixo do tema padrão da navegação por baixo do
+ * conteúdo — visível no dark mode). No web, também limita a largura a uma
+ * coluna de celular centralizada.
+ */
+function ThemedShell({ children }: { children: ReactNode }) {
+  const { scheme, c } = useTheme();
+  const web = Platform.OS === 'web';
+
+  const navTheme = useMemo(() => {
+    const base = scheme === 'dark' ? NavDark : NavLight;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        background: c('bg'),
+        card: c('bg'),
+        text: c('text'),
+        border: c('border'),
+        primary: c('primary'),
+        notification: c('primary'),
+      },
+    };
+  }, [scheme, c]);
+
+  return (
+    <NavThemeProvider value={navTheme}>
+      <View style={{ flex: 1, backgroundColor: web ? c('surface') : c('bg') }}>
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: web ? 480 : undefined,
+            alignSelf: 'center',
+            backgroundColor: c('bg'),
+          }}
+        >
+          {children}
+        </View>
+      </View>
+    </NavThemeProvider>
+  );
 }
 
 export default function RootLayout() {
@@ -32,7 +77,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ThemedRoot>
+          <ThemedShell>
             <ToastProvider>
               <AuthGate>
                 <TimerHydrator />
@@ -41,7 +86,7 @@ export default function RootLayout() {
                 <TimerPill />
               </AuthGate>
             </ToastProvider>
-          </ThemedRoot>
+          </ThemedShell>
         </ThemeProvider>
       </SafeAreaProvider>
     </QueryClientProvider>

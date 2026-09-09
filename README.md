@@ -57,13 +57,37 @@ Este repositório entrega o **sub-projeto #1 (Fundação)**. Escopo detalhado em
    Use a **connection string do pooler** que aparece em
    Supabase → Project Settings → Database → Connection string.
 
-4. **Rodar o app**
+4. **Rodar o app (mobile)**
 
    ```bash
    npm start
    ```
 
    Abra no Expo Go (QR code) ou pressione `a` / `i` para emulador.
+
+5. **Rodar no navegador** (dev/preview — não é alvo público)
+
+   ```bash
+   npm run web
+   ```
+
+   Abre em `http://localhost:8081`. O fluxo central (login, onboarding, painel,
+   edital, cronômetro, exercícios, revisão, ajustes) funciona no navegador; o
+   layout fica numa coluna de largura de celular centralizada. Recursos
+   exclusivos de mobile (widget, push, backup em nuvem) não se aplicam.
+
+---
+
+## Screenshots automáticos
+
+```bash
+npm run build:web && npm run preview
+```
+
+`npm run preview` semeia um cenário de teste no Supabase, sobe o build web
+estático e percorre as telas com o Chromium (Playwright), salvando PNGs em
+`preview/` (claro + escuro; um usuário com concurso e outro sem). Requer
+`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` no `.env`.
 
 ---
 
@@ -76,8 +100,9 @@ Este repositório entrega o **sub-projeto #1 (Fundação)**. Escopo detalhado em
 | `npm run typecheck` | `tsc --noEmit` (TypeScript strict). |
 | `npm run lint` | ESLint. |
 
-Os testes de integração criam e removem usuários/dados de teste no projeto da
-nuvem; **não** rode `supabase db reset`.
+Os testes de integração criam usuários/dados de teste no projeto da nuvem
+(sem limpeza automática — acumulam no projeto de dev); **não** rode
+`supabase db reset`.
 
 ---
 

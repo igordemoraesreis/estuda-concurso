@@ -25,6 +25,7 @@ export const supabase = createClient<Database>(url, anon, {
     storage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // No web, o retorno do OAuth vem como parâmetros na URL; no nativo o fluxo é via deep link.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
